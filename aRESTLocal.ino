@@ -13,7 +13,6 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-
 // Create aREST instance
 aREST rest = aREST();
 
@@ -33,6 +32,7 @@ String ok="OK";
 boolean uploadMode;
 String warning;
 String devices;
+String queryData;
 boolean backgroundRunning;
 // global methods 
 String servoMove(Servo servo,int pin,int start,int move,int gap,int between,int loop){
@@ -98,16 +98,21 @@ int uploadModeConfig(String command){
   }
   return r;
 }
+int getRoutes(String command);
+
 int ledControl(String command);
 int testControl(String command);
 
 //artoria
 int saberPush(String command);
 int saberStart(String command);
+
 //exia
 int exiaStart(String command);
 int exiaCycle(String command);
 int exiaTransition(String command);
+int exiaModeChange(String command);
+int exiaChangeState(String command);
 
 // devices
 // artoria
@@ -118,36 +123,70 @@ int pushB=180;
 String saberState,saberStatus,saberWarning,saberRoutes;
 // exia
 Servo exia;
-String exiaStatus,exiaState,exiaWarning;
+String exiaState,exiaWarning;
+boolean exiaMode;
+String exiaStatus;
+String exiaRoutes;
 int between=1000;
 
 int ledPin=D2;
 String ledState="off";
+// query for route data 
+int getRoutes(String command){
+  int r=0;
+  if(command=="saber"){
+    queryData=saberRoutes;
+    r=1; 
+  }
+  if(command=="exia"){
+    queryData=exiaRoutes;
+    r=1;
+  }
+  if(queryData!=""&r==0){
+    queryData="";
+  }
+  return r;
+}
 void setup(void)
 {
   // Start Serial
   Serial.begin(115200);
   // Init variables and expose them to REST API
+  warning="",backgroundRunning=false,devices="ArtoriaPusher|ExiaPusher", uploadMode=false;
+  queryData="";
+  //saber
   saberState="",saberStatus="",saberWarning="";
   saberRoutes="saberPush|saberStart";
-  warning="",backgroundRunning=false,devices="ArtoriaPusher|ExiaPusher", uploadMode=false;;
+  // exia
+  exiaMode=false;
+  exiaStatus="",exiaState="",exiaWarning="";
+  exiaRoutes="exiaStart|exiaCycle|exiaTransition|exiaModeChange(factory,cycle)|exiaChangeState(startup,normal,pre-trans-am,trans-am,off)";
   // global json
   rest.variable("Devices",&devices);
-  rest.variable("Warning",&warning);
+  // 1 device
+  //rest.variable("Warning",&warning);
   rest.variable("Background",&backgroundRunning);
-  rest.variable("UploadMode",&uploadMode);
+  rest.variable("QueryData",&queryData);
   //devices json
-  rest.variable("SaberRoutes",&saberRoutes);
+  // saber
   rest.variable("SaberState",&saberState);
   rest.variable("SaberStatus",&saberStatus);
   rest.variable("SaberWarning",&saberWarning);
+  // exia 
+  rest.variable("ExiaMode",&exiaMode);
+  rest.variable("ExiaStatus",&exiaStatus);
+  rest.variable("ExiaState",&exiaState);
+  rest.variable("ExiaWarning",&exiaWarning);
   
   // Function to be exposed
   // config route
   rest.function("upload",uploadModeConfig);
+  rest.function("routes",getRoutes);
   // Saber http route
   rest.function("saberPush",saberPush);
   rest.function("saberStart",saberStart);
+  // exia http route
+
   // test route
   rest.function("led",ledControl);
   rest.function("testControl",testControl);
