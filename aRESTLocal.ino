@@ -77,6 +77,7 @@ void ledBlink(int pin,long interval){
     d1=millis();
     digitalWrite(pin,x);
   }
+  d1,d2;
 }
 // calculate time for mins
 int calculateTime(int t){
@@ -152,7 +153,7 @@ void setup(void)
   // Start Serial
   Serial.begin(115200);
   // Init variables and expose them to REST API
-  warning="",backgroundRunning=false,devices="ArtoriaPusher|ExiaPusher", uploadMode=false;
+  warning="",backgroundRunning=false,devices="Artoria|Exia", uploadMode=false;
   queryData="";
   //saber
   saberState="",saberStatus="",saberWarning="";
@@ -160,7 +161,7 @@ void setup(void)
   // exia
   exiaMode=false;
   exiaStatus="",exiaState="",exiaWarning="";
-  exiaRoutes="exiaStart|exiaCycle|exiaTransition|exiaModeChange(factory,cycle)|exiaChangeState(startup,normal,pre-trans-am,trans-am,off)";
+  exiaRoutes="exiaStart|exiaCycle|exiaTransition|exiaModeChange(false,true)|exiaChangeState(startup,normal,pre-trans-am,trans-am,off)";
   // global json
   rest.variable("Devices",&devices);
   // 1 device
@@ -297,6 +298,9 @@ void background(){
   }
   if(ledState=="off"){
     digitalWrite(ledPin,0);
+    backgroundRunning=false;
+    d1,d2;
+    x=1;
   }
 
 }
@@ -315,7 +319,6 @@ int saberPush(String command){
        if(saberState=="fade"){
             move=servoMove(saber,servo_pin2,180,89,1000,500,2);
           if(move==ok){
-            backgroundRunning=false;
             saberState="standard";
             saberStatus=move;
             r=1;
@@ -386,5 +389,5 @@ int testControl(String command){
   return 1;
 }
 void blink(){
-  ledBlink(D2,150);
+  ledBlink(D2,250);
 }
